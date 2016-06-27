@@ -35,9 +35,8 @@ public class DbDeploy {
 	private DelimiterType delimiterType = DelimiterType.normal;
 	private File templatedir;
     private ChangeScriptFilter changeScriptFilter;
-    private List<String> exceptionsToContinueExecutionOn = new ArrayList<String>();
 
-    public void setDriver(String driver) {
+	public void setDriver(String driver) {
 		this.driver = driver;
 	}
 
@@ -111,8 +110,7 @@ public class DbDeploy {
             splitter.setDelimiter(getDelimiter());
             splitter.setDelimiterType(getDelimiterType());
             splitter.setOutputLineEnding(lineEnding);
-            doScriptApplier = new DirectToDbApplier(queryExecuter, databaseSchemaVersionManager, splitter, exceptionsToContinueExecutionOn);
-
+            doScriptApplier = new DirectToDbApplier(queryExecuter, databaseSchemaVersionManager, splitter);
         }
 
         ChangeScriptApplier undoScriptApplier = null;
@@ -233,16 +231,5 @@ public class DbDeploy {
 
     public void setChangeScriptFilter(ChangeScriptFilter changeScriptFilter) {
         this.changeScriptFilter = changeScriptFilter;
-    }
-
-    public void setExceptionsToContinueExecutionOn(String exceptionsCsv) {
-        StringTokenizer tokenizer = new StringTokenizer(exceptionsCsv, ",");
-        while(tokenizer.hasMoreTokens()) {
-            exceptionsToContinueExecutionOn.add(tokenizer.nextToken());
-        }
-    }
-
-    public List<String> getExceptionsToContinueExecutionOn() {
-        return exceptionsToContinueExecutionOn;
     }
 }

@@ -110,11 +110,7 @@ public class AntTarget extends Task {
         dbDeploy.setChangeScriptFilter(filter);
     }
 
-    public void setExceptionsToContinueExecutionOn(String exceptionsCsv) {
-        dbDeploy.setExceptionsToContinueExecutionOn(exceptionsCsv);
-    }
-
-    private ChangeScriptFilter newChangeSciptFilter(String filterClassName) {
+	private ChangeScriptFilter newChangeSciptFilter(String filterClassName) {
         try {
             ChangeScriptFilter filter = null;
             if (filterClassName != null && !"".equals(filterClassName)) {

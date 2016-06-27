@@ -14,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnit44Runner;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.hamcrest.Matchers.is;
@@ -37,7 +36,7 @@ public class DirectToDbApplierTest {
 	@Before
 	public void setUp() {
 
-        applier = new DirectToDbApplier(queryExecuter, schemaVersionManager, splitter, new ArrayList<String>());
+        applier = new DirectToDbApplier(queryExecuter, schemaVersionManager, splitter);
 	}
 	
 	@Test
@@ -91,92 +90,4 @@ public class DirectToDbApplierTest {
 
 		verify(queryExecuter).commit();
 	}
-
-    @Test
-    public void shouldContinueOnErrorIfErrorToIgnoreAreProvided() throws Exception
-    {
-        applier = new DirectToDbApplier(queryExecuter, schemaVersionManager, splitter, Arrays.asList("ORA-0001: unique constraint"));
-
-        when(splitter.split("split1; content1")).thenReturn(Arrays.asList("split1", "content1"));
-        when(splitter.split("content2")).thenReturn(Arrays.asList("content2"));
-
-        ChangeScript script1 = new StubChangeScript(1, "script", "split1; content1");
-        ChangeScript script2 = new StubChangeScript(2, "script", "content2");
-
-        doThrow(new SQLException("ORA-0001: unique constraint")).when(queryExecuter).execute("split1");
-
-        ChangeScriptApplierException expectedException = null;
-        try {
-            applier.apply(Arrays.asList(script1, script2));
-
-        } catch (ChangeScriptApplierException e) {
-            expectedException = e;
-        }
-
-        verify(queryExecuter).execute("split1");
-        verify(queryExecuter).execute("content2");
-
-        ChangeScriptFailedException scriptException = expectedException.getChangeScriptExceptions().get(0);
-        assertThat(scriptException .getExecutedSql(), is("split1"));
-        assertThat(scriptException .getScript(), is(script1));
-    }
-
-    @Test
-    public void shouldStopExecutionIfExceptionIsOtherThanIgnored() throws SQLException {
-        applier = new DirectToDbApplier(queryExecuter, schemaVersionManager, splitter, Arrays.asList("ORA-0001: unique constraint"));
-
-        when(splitter.split("split1; content1")).thenReturn(Arrays.asList("split1", "content1"));
-        when(splitter.split("content2")).thenReturn(Arrays.asList("content2"));
-
-        ChangeScript script1 = new StubChangeScript(1, "script", "split1; content1");
-        ChangeScript script2 = new StubChangeScript(2, "script", "content2");
-
-        doThrow(new SQLException("ORA-0002: table or view does not exist")).when(queryExecuter).execute("split1");
-
-        ChangeScriptApplierException expectedException = null;
-        try {
-            applier.apply(Arrays.asList(script1, script2));
-
-        } catch (ChangeScriptApplierException e) {
-            expectedException = e;
-        }
-
-        assertNotNull(expectedException);
-        verify(queryExecuter).execute("split1");
-        verify(queryExecuter, times(0)).execute("content2");
-
-    }
-
-
-
-    @Test
-    public void shouldStopExecutionAndGiveAllPreviousExceptionsIfToIgnoreAreProvided() throws SQLException {
-        applier = new DirectToDbApplier(queryExecuter, schemaVersionManager, splitter, Arrays.asList("ORA-0001: unique constraint"));
-
-        when(splitter.split("split1; content1")).thenReturn(Arrays.asList("split1", "content1"));
-        when(splitter.split("content2")).thenReturn(Arrays.asList("content2"));
-
-        ChangeScript script1 = new StubChangeScript(1, "script", "split1; content1");
-        ChangeScript script2 = new StubChangeScript(2, "script", "content2");
-
-        doThrow(new SQLException("ORA-0001: unique constraint")).when(queryExecuter).execute("split1");
-        doThrow(new SQLException("ORA-0002: table or view does not exist")).when(queryExecuter).execute("content2");
-
-        ChangeScriptApplierException expectedException = null;
-        try {
-            applier.apply(Arrays.asList(script1, script2));
-
-        } catch (ChangeScriptApplierException e) {
-            expectedException = e;
-        }
-
-        assertNotNull(expectedException);
-        ChangeScriptFailedException scriptException = expectedException.getChangeScriptExceptions().get(0);
-        assertThat(scriptException .getExecutedSql(), is("split1"));
-        assertThat(scriptException.getScript(), is(script1));
-
-        scriptException = expectedException.getChangeScriptExceptions().get(1);
-        assertThat(scriptException .getExecutedSql(), is("content2"));
-        assertThat(scriptException.getScript(), is(script2));
-    }
 }
